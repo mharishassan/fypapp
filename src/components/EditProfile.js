@@ -1,29 +1,41 @@
 import React, { useState } from 'react';
-import './EditProfile.css'; // Import the CSS file for styling
+import './EditProfile.css';
 import { useNavigate } from 'react-router-dom';
+import { getDatabase, ref, update} from "firebase/database";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+
+
 const ChangeEmail = () => {
   const [oldEmail, setOldEmail] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [confirmEmail, setConfirmEmail] = useState('');
   const [message, setMessage] = useState('');
-const navigate=useNavigate()
-  const handleChangeEmail = () => {
+  const navigate = useNavigate()
+  const db = getDatabase();
   
-    const storedEmail = 'jareer@gmail.com';
-    if (oldEmail !== storedEmail) {
-      setMessage('Old Email is incorrect.');
-      return;
-    }
+  const storedEmail = localStorage.getItem('person_email');
+  
+  const handleSubmit = async(e) => {
 
-    if (newEmail !== confirmEmail) {
-      setMessage('New Email and confirm Email do not match.');
-      return;
+    const auth = getAuth();
+    onAuthStateChanged(auth, (user) => {
+    if (user) {
+      if (oldEmail !== storedEmail) {
+        setMessage('Old Email is incorrect.');
+        return;
+      }
+      if (newEmail !== confirmEmail) {
+        setMessage('New Email and confirm Email do not match.');
+        return;
+      } 
+      update(ref(db, 'users/'+ user.uid), {
+        person_email: newEmail
+      })
+      alert("Update Successful");
+      navigate("/UserHomepage");
     }
-
-    setMessage('Email changed successfully!');
-    navigate('/UserHomepage')
+  });
   };
-
   return (
     <div className="card-container">
       <div className="card">
@@ -40,7 +52,7 @@ const navigate=useNavigate()
           <label>Confirm Email:</label>
           <input type="Email" value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} />
         </div>
-        <button onClick={handleChangeEmail}>Update</button>
+        <button onClick={handleSubmit}>Update</button>
         <p className="message">{message}</p>
       </div>
     </div>
